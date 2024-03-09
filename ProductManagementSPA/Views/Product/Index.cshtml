@@ -1,0 +1,466 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+<script src="~/Scripts/jquery-3.4.1.js"></script>
+<script src="~/Scripts/bootstrap.js"></script>
+<link href="~/Content/bootstrap.css" rel="stylesheet" />
+
+<script type="text/javascript">
+
+    /// <summary>
+    /// Load data from the database when the page is ready
+    /// </summary>
+    $(document).ready(function () {
+        loadData();
+    })
+
+    /// <summary>
+    /// Load data from the database
+    /// </summary>
+    /// <returns>The list of products</returns>
+    function loadData() {
+        $.ajax({
+            url: "/Product/GetProducts",
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                //This will clear the tbody before appending the data
+                var html = '';
+                $.each(result, function (key, item) {
+                    html += '<tr>';
+                    html += '<td class="text-center align-middle">' + item.ProductID + '</td>';
+                    html += '<td class="text-center align-middle" title="' + item.Name + '">' + truncateText(item.Name, 20) + '</td>';
+                    html += '<td class="text-center align-middle" title="' + item.Description + '">' + truncateText(item.Description, 50) + '</td>';
+                    html += '<td class="text-center align-middle">' + item.Price + '</td>';
+                    html += '<td class="text-center align-middle">' + item.Quantity + '</td>';
+                    html += '<td class="text-center align-middle">' + item.Category + '</td>';
+                    html += '<td class="text-center align-middle">' + item.Supplier + '</td>';
+                    html += '<td class="text-center align-middle"><button class="btn btn-primary" onclick="return getProductByID(' + item.ProductID + ')">Edit</button></td>';
+                    html += '<td class="text-center align-middle"><button class="btn btn-secondary" onclick="Delele(' + item.ProductID + ')">Delete</button></td>';
+                    html += '</tr>';
+                });
+                $('.tbody').html(html);
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    // Function to truncate text if it exceeds a certain number of characters
+    function truncateText(text, maxLength) {
+        if (text.length > maxLength) {
+            return text.substring(0, maxLength) + '...';
+        }
+        return text;
+    }
+
+
+    /// <summary>
+    /// Add a new product to the database
+    /// </summary>
+    /// <returns>True if the product is added successfully, false otherwise</returns>
+    /// <remarks>Validation using jQuery</remarks>
+    function addProduct() {
+        //Validation using jQuery
+        var isValid = true;
+        //product name validation
+        isValid &= validateField('#name', '#errorMessageName', value => value != "", 'Name is required');
+        isValid &= validateField('#name', '#errorMessageName', value => !/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g.test(value), 'Name cannot contain special characters');
+        isValid &= validateField('#name', '#errorMessageName', value => value.length <= 50, 'Name must be less than 50 characters');
+        //product description validation
+        isValid &= validateField('#description', '#errorMessageDescription', value => value != "", 'Description is required');
+        isValid &= validateField('#description', "#errorMessageDescription", value => value.length <= 100, "Description must be less than 100 characters");
+        //product price validation
+        isValid &= validateField('#price', '#errorMessagePrice', value => value != "" && !isNaN(value) && value > 0, 'Price must be a positive number');
+        //product quantity validation
+        isValid &= validateField('#quantity', '#errorMessageQuantity', value => value != "" && Number.isInteger(parseFloat(value)) && value >= 0, 'Quantity must be a non-negative integer');
+        //product category validation
+        isValid &= validateField('#category', '#errorMessageCategory', value => value.length <= 50, 'Category must be less than 50 characters');
+        isValid &= validateField('#category', '#errorMessageCategory', value => isNaN(value), 'Category must be a string');
+        isValid &= validateField('#category', '#errorMessageCategory', value => value != "", 'Category is required');
+        //product supplier validation
+        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value.length <= 50, 'Supplier must be less than 50 characters');
+        isValid &= validateField('#supplier', '#errorMessageSupplier', value => isNaN(value), 'Supplier must be a string');
+        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value != "", 'Supplier is required');
+
+        if (!isValid) {
+            return false;
+        }
+        //End of validation
+
+        // Create a product object
+        var productObj = {
+            ProductID: $('#product-id').val(),
+            Name: $('#name').val(),
+            Description: $('#description').val(),
+            Price: $('#price').val(),
+            Quantity: $('#quantity').val(),
+            Category: $('#category').val(),
+            Supplier: $('#supplier').val()
+        };
+
+        //Add the product to the database
+        $.ajax({
+            url: "/Product/AddProduct",
+            data: JSON.stringify(productObj),
+            type: "POST",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                // If the product is added successfully, reload the data
+                console.log(result);
+                if (result == true) {
+                    loadData();
+                    $('#myModal').modal('hide');
+                    $('.modal-backdrop').remove();
+                }
+                else {
+                    $('#errorMessage').text('Product not added');
+                }
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Get a product by its ID
+    /// </summary>
+    /// <param name="productId">The ID of the product to get</param>
+    /// <returns>The product details</returns>
+    function getProductByID(productId) {
+
+        // Ajax call to get the product by its ID
+        $.ajax({
+            url: "/Product/GetProductByID/" + productId,
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                // Fill the form with the product details
+                $('#product-id').val(result.ProductID);
+                $('#name').val(result.Name);
+                $('#description').val(result.Description);
+                $('#price').val(result.Price);
+                $('#quantity').val(result.Quantity);
+                $('#category').val(result.Category);
+                $('#supplier').val(result.Supplier);
+                $('#myModal').modal('show');
+                $('#btnUpdate').show();
+                $('#btnAdd').hide();
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+        return false;
+    }
+
+    /// <summary>
+    /// Update a product in the database
+    /// </summary>
+    /// <returns>True if the product is updated successfully, false otherwise</returns>
+    /// <remarks>Validation using jQuery</remarks>
+    function updateProduct() {
+        //Validation using jQuery
+        var isValid = true;
+        //product name validation
+        isValid &= validateField('#name', '#errorMessageName', value => value != "", 'Name is required');
+        isValid &= validateField('#name', '#errorMessageName', value => !/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g.test(value), 'Name cannot contain special characters');
+        isValid &= validateField('#name', '#errorMessageName', value => value.length <= 50, 'Name must be less than 50 characters');
+        //product description validation
+        isValid &= validateField('#description', '#errorMessageDescription', value => value != "", 'Description is required');
+        isValid &= validateField('#description', "#errorMessageDescription", value => value.length <= 100, "Description must be less than 100 characters");
+        //product price validation
+        isValid &= validateField('#price', '#errorMessagePrice', value => value != "" && !isNaN(value) && value > 0, 'Price must be a positive number');
+        //product quantity validation
+        isValid &= validateField('#quantity', '#errorMessageQuantity', value => value != "" && Number.isInteger(parseFloat(value)) && value >= 0, 'Quantity must be a non-negative integer');
+        //product category validation
+        isValid &= validateField('#category', '#errorMessageCategory', value => value.length <= 50, 'Category must be less than 50 characters');
+        isValid &= validateField('#category', '#errorMessageCategory', value => isNaN(value), 'Category must be a string');
+        isValid &= validateField('#category', '#errorMessageCategory', value => value != "", 'Category is required');
+        //product supplier validation
+        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value.length <= 50, 'Supplier must be less than 50 characters');
+        isValid &= validateField('#supplier', '#errorMessageSupplier', value => isNaN(value), 'Supplier must be a string');
+        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value != "", 'Supplier is required');
+
+        if (!isValid) {
+            return false;
+        }
+        //End of validation
+
+        // Create a product object
+        var productObj = {
+            ProductID: $('#product-id').val(),
+            Name: $('#name').val(),
+            Description: $('#description').val(),
+            Price: $('#price').val(),
+            Quantity: $('#quantity').val(),
+            Category: $('#category').val(),
+            Supplier: $('#supplier').val()
+        };
+
+        //Update the product in the database
+        $.ajax({
+            url: "/Product/UpdateProduct",
+            data: JSON.stringify(productObj),
+            type: "POST",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                // If the product is updated successfully, reload the data
+                console.log(result);
+                if (result == true) {
+                    loadData();
+                    $('#myModal').modal('hide');
+                    $('.modal-backdrop').remove();
+                }
+                else {
+                    $('#errorMessage').text('Product not updated');
+                }
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+    }
+
+    /// <summary>
+    /// Delete a product from the database
+    /// </summary>
+    /// <param name="productId">The ID of the product to delete</param>
+    /// <returns>True if the product is deleted successfully, false otherwise</returns>
+    function Delele(productId) {
+        // Ask the user to confirm the deletion, then delete the product(confirm is a built-in JavaScript function that displays a dialog box with a specified message and an OK and a Cancel button.
+        //If the user clicks the OK button, the confirm method returns true.Otherwise, it returns false.)
+        var ans = confirm("Are you sure you want to delete this Record?");
+        if (ans) {
+            //Ajax call to delete the product by its ID from the database if the user confirms the deletion
+            $.ajax({
+                url: "/Product/DeleteProduct/" + productId,
+                type: "POST",
+                contentType: "application/json;charset=UTF-8",
+                dataType: "json",
+                success: function (result) {
+                    // If the product is deleted successfully, reload the data with the updated list of products
+                    if (result == true) {
+                        loadData();
+                    }
+                    else {
+                        $('#errorMessage').text('Product not deleted');
+                    }
+                },
+                error: function (errormessage) {
+                    alert(errormessage.responseText);
+                }
+            });
+        }
+    }
+
+    /// <summary>
+    /// Clear the textboxes
+    /// </summary>
+    /// <returns>Clear the textboxes values</returns>
+    function clearTextBox() {
+        $('#product-id').val("");
+        $('#name').val("");
+        $('#description').val("");
+        $('#price').val("");
+        $('#quantity').val("");
+        $('#category').val("");
+        $('#supplier').val("");
+        $('#btnUpdate').hide();
+        $('#btnAdd').show();
+        $('#errorMessage').text('');
+    }
+
+
+    ///<summary>
+    ///Validate the field and display specific error message
+    ///</summary>
+    ///<param name="field">The field to validate</param>
+    ///<param name="errorMessageElement">The error message element</param>
+    ///<param name="validationFunction">The validation function</param>
+    ///<param name="errorMessage">The error message</param>
+    ///<returns>True if the field is valid, false otherwise</returns>
+    function validateField(field, errorMessageElement, validationFunction, errorMessage) {
+        var value = $(field).val().trim();
+        if (!validationFunction(value)) {
+            $(errorMessageElement).text(errorMessage);
+            return false;
+        } else {
+            $(errorMessageElement).text('');
+            return true;
+        }
+    }
+
+    //Categories dropdown list
+    $(document).ready(function () {
+        var categories = [
+            "Smartphones",
+            "Laptops",
+            "Desktops",
+            "Tablets",
+            "Smart Watches",
+            "Cameras",
+            "Printers",
+            "Monitors",
+            "Keyboards",
+            "Mice",
+            "Headphones",
+            "Speakers",
+            "Microphones",
+            "Webcams",
+            "Game Consoles",
+            "Graphic Cards",
+            "Processors",
+            "Motherboards",
+            "RAM",
+            "Hard Drives"
+        ];
+        var select = $('#category');
+        for (var i = 0; i < categories.length; i++) {
+            var option = $('<option/>', {
+                value: categories[i],
+                text: categories[i]
+            });
+            select.append(option);
+        }
+    });
+
+
+</script>
+
+<div class="container py-5">
+    <h2 class="mb-4">Product Management</h2>
+
+    <p class="lead">This page allows you to manage the products in the database. You can add, edit, and delete products.</p>
+
+    <p class="lead">Read the instructions below by clicking the "Instructions" button to learn how to use this page.</p>
+
+    
+
+    <div class="d-flex justify-content-md-start">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal" onclick="clearTextBox();">Add New Product</button>
+    </div>
+</div>
+
+<center>
+    <h2>Product List</h2>
+</center>
+<!-- Table-->
+    <details>
+        <summary class="p-2 bg-dark text-white rounded-top ">Instructions</summary>
+        <ul class="list-group-item-secondary rounded-bottom ">  
+            <li class="p-2">
+            Create a new product by clicking the "Add New Product" button. 
+            A form will appear in a modal where you can enter the product details. 
+            Click "Save" to add the product to the database.
+            </li>
+            <li class="p-2">
+            To edit a product, click the "Edit" button next to the product you want to modify. 
+            The same form will appear in a modal with the existing product details. 
+            Modify the details as needed and click "Save" to update the product in the database.
+            </li>
+            <li class="p-2">
+            To delete a product, click the "Delete" button next to the product you want to remove. 
+            A confirmation dialog will appear. 
+            Click "Confirm" to permanently delete the product from the database.
+            </li>
+        </ul>
+    </details>
+    <table class="table table-striped table-hover table-bordered">
+        <thead class="bg-dark text-white">
+            <tr>
+                <th class="text-center align-middle">ProductID</th>
+                <th class="text-center align-middle">Name</th>
+                <th class="text-center align-middle">Description</th>
+                <th class="text-center align-middle">Price</th>
+                <th class="text-center align-middle">Quantity</th>
+                <th class="text-center align-middle">Category</th>
+                <th class="text-center align-middle">Supplier</th>
+                <th class="text-center align-middle">Edit</th>
+                <th class="text-center align-middle">Delete</th>
+            </tr>
+        </thead>
+        <tbody class="tbody">
+        </tbody>
+    </table>
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h4 class="modal-title" id="myModalLabel">Product Form</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" id="product-id" />
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Product Name</label>
+                                    <input type="text" id="name" class="form-control" />
+                                    <span id="errorMessageName" style="color:red;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <input type="text" id="description" class="form-control" />
+                                    <span id="errorMessageDescription" style="color:red;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Product Price</label>
+                                    <input type="number" id="price" class="form-control" />
+                                    <span id="errorMessagePrice" style="color:red;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Product Quantity</label>
+                                    <input type="number" id="quantity" class="form-control" />
+                                    <span id="errorMessageQuantity" style="color:red;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select id="category" class="form-control"></select>
+                                    <span id="errorMessageCategory" style="color:red;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Supplier</label>
+                                    <input type="text" id="supplier" class="form-control" />
+                                    <span id="errorMessageSupplier" style="color:red;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="btnAdd" onclick="addProduct()">Add</button>
+                    <button type="button" class="btn btn-primary" id="btnUpdate" onclick="updateProduct()">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
