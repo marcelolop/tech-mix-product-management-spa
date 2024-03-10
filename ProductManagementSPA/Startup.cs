@@ -1,4 +1,6 @@
-﻿using Microsoft.Owin;
+﻿// Ignore Spelling: app
+
+using Microsoft.Owin;
 using Owin;
 
 [assembly: OwinStartupAttribute(typeof(ProductManagementSPA.Startup))]
