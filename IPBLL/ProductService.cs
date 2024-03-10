@@ -19,7 +19,7 @@ namespace IPBLL
         public List<Product> GetProducts()
         {
             ProductRepository productRepository = new ProductRepository();
-            return productRepository.GetProductsRepo();
+            return productRepository.GetProductsRepository();
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace IPBLL
         public Product GetProductById(int id)
         {
             ProductRepository productRepository = new ProductRepository();
-            return productRepository.GetProductByIdRepo(id);
+            return productRepository.GetProductByIdRepository(id);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace IPBLL
         public bool AddProduct(Product product)
         {
             ProductRepository productRepository = new ProductRepository();
-            return productRepository.AddProductRepo(product);
+            return productRepository.AddProductRepository(product);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace IPBLL
         public bool UpdateProduct(Product product)
         {
             ProductRepository productRepository = new ProductRepository();
-            return productRepository.UpdateProductRepo(product);
+            return productRepository.UpdateProductRepository(product);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace IPBLL
         public bool DeleteProduct(int id)
         {
             ProductRepository productRepository = new ProductRepository();
-            return productRepository.DeleteProductRepo(id);
+            return productRepository.DeleteProductRepository(id);
         }
           
     }
