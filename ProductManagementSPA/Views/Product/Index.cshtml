@@ -30,7 +30,7 @@
                 let html = '';
                 $.each(result, function (key, item) {
                     html += '<tr>';
-                    html += '<td class="text-center align-middle">' + item.ProductID + '</td>';
+                    //html += '<td class="text-center align-middle">' + item.ProductID + '</td>';
                     html += '<td class="text-center align-middle" title="' + item.Name + '">' + truncateText(item.Name, 20) + '</td>';
                     html += '<td class="text-center align-middle" title="' + item.Description + '">' + truncateText(item.Description, 50) + '</td>';
                     html += '<td class="text-center align-middle">' + item.Price.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) + '</td>';
@@ -44,7 +44,11 @@
                 $('.tbody').html(html);
             },
             error: function (errormessage) {
-                alert(errormessage.responseText);
+                if(errormessage.responseText == "Not Found") {
+                    alert("No products found");
+                } else {
+                    alert(errormessage.responseText);
+                }
             }
         });
     }
@@ -118,11 +122,19 @@
                     $('.modal-backdrop').remove();
                 }
                 else {
-                    $('#errorMessage').text('Product not added');
+                    if(result == "Product already exists") {
+                        $('#errorMessage').text('Product already exists');
+                    } else {
+                        alert('Product not added');
+                    }
                 }
             },
             error: function (errormessage) {
-                alert(errormessage.responseText);
+                if(errormessage.responseText == "Not Found") {
+                    alert("Product not found");
+                } else {
+                    alert(errormessage.responseText);
+                }
             }
         });
     }
@@ -154,7 +166,15 @@
                 $('#btnAdd').hide();
             },
             error: function (errormessage) {
-                alert(errormessage.responseText);
+                if(errormessage.responseText == "Not Found") {
+                    alert("Product not found");
+                } else {
+                    if(errormessage.responseText == "Product not found") {
+                        alert("Product not found");
+                    } else {
+                        alert(errormessage.responseText);
+                    }
+                }
             }
         });
         return false;
@@ -220,11 +240,15 @@
                     $('.modal-backdrop').remove();
                 }
                 else {
-                    $('#errorMessage').text('Product not updated');
+                    alert('Product not updated');
                 }
             },
             error: function (errormessage) {
-                alert(errormessage.responseText);
+                if (errormessage.responseText == "Not Found") {
+                    alert("Product not found");
+                } else {
+                    alert(errormessage.responseText);
+                }
             }
         });
     }
@@ -251,7 +275,11 @@
                         loadData();
                     }
                     else {
-                        $('#errorMessage').text('Product not deleted');
+                        if (result == "Product not found") {
+                            alert("Product not found");
+                        } else {
+                            alert("Product not deleted");
+                        }
                     }
                 },
                 error: function (errormessage) {
@@ -376,7 +404,9 @@
     <table class="table table-striped table-hover table-bordered">
         <thead class="bg-dark text-white">
             <tr>
+                <!--
                 <th class="text-center align-middle">Product ID</th>
+                -->
                 <th class="text-center align-middle">Name</th>
                 <th class="text-center align-middle">Description</th>
                 <th class="text-center align-middle">Price</th>

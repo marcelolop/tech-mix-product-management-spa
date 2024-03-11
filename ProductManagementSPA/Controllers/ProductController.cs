@@ -21,6 +21,7 @@ namespace ProductManagementSPA.Controllers
         /// </summary>
         /// <returns> The view of the product page.</returns>
         [Authorize]
+        [HttpGet]
         public ActionResult Index()
         {
             return View();
@@ -30,6 +31,7 @@ namespace ProductManagementSPA.Controllers
         /// This method is responsible for returning the list of products in JSON format.
         /// </summary>
         /// <returns> The list of products in JSON format.</returns>
+        [Authorize]
         [HttpGet]
         public JsonResult GetProducts()
         {
@@ -49,6 +51,7 @@ namespace ProductManagementSPA.Controllers
         /// </summary>
         /// <param name="id"> The id of the product.</param>
         /// <returns> The product in JSON format.</returns>
+        [Authorize]
         [HttpGet]
         public JsonResult GetProductById(int id)
         {
@@ -63,6 +66,7 @@ namespace ProductManagementSPA.Controllers
         /// </summary>
         /// <param name="product"> The product to be added.</param>
         /// <returns> A JSON result indicating the success of the operation.</returns>
+        [Authorize]
         [HttpPost]
         public JsonResult AddProduct(Product product)
         {
@@ -84,6 +88,7 @@ namespace ProductManagementSPA.Controllers
         /// </summary>
         /// <param name="product"> The product to be updated.</param>
         /// <returns> A JSON result indicating the success of the operation.</returns>
+        [Authorize]
         [HttpPost]
         public JsonResult UpdateProduct(Product product)
         {
@@ -103,6 +108,7 @@ namespace ProductManagementSPA.Controllers
         /// </summary>
         /// <param name="id"> The id of the product to be deleted.</param>
         /// <returns> A JSON result indicating the success of the operation.</returns>
+        [Authorize]
         [HttpPost]
         public JsonResult DeleteProduct(int id)
         {
