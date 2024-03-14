@@ -157,7 +157,7 @@
                 }
                 else {
                     if(result == "Product already exists") {
-                        $('#errorMessage').text('Product already exists');
+                        alert('Product already exists');
                     } else {
                         alert('Product not added');
                     }
@@ -322,7 +322,6 @@
         $('#supplier').val("");
         $('#btnUpdate').hide();
         $('#btnAdd').show();
-        $('#errorMessage').text('');
     }
 
     ///<summary>
@@ -338,7 +337,10 @@
         $('#errorMessageSupplier').text('');
     }
 
-    // Function to truncate text if it exceeds a certain number of characters
+    ///<summary>
+    ///Truncate the text if it exceeds the maximum length
+    ///</summary>
+    ///<param name="text">The text to truncate</param>
     function truncateText(text, maxLength) {
         if (text.length > maxLength) {
             return text.substring(0, maxLength) + '...';
@@ -465,19 +467,19 @@
         <summary class="p-2 bg-dark text-white rounded-top ">Instructions</summary>
         <ul class="list-group-item-secondary rounded-bottom ">  
             <li class="p-2">
-            Create a new product by clicking the "Add New Product" button. 
+            Create a new product by clicking the <strong style="color:dodgerblue">"Add New Product"</strong> button. 
             A form will appear in a modal where you can enter the product details. 
-            Click "Save" to add the product to the database.
+            Click <strong style="color:dodgerblue">"Save"</strong> to add the product to the database.
             </li>
             <li class="p-2">
-            To edit a product, click the "Edit" button next to the product you want to modify. 
+            To edit a product, click the <strong style="color:dodgerblue">"Edit"</strong> button next to the product you want to modify. 
             The same form will appear in a modal with the existing product details. 
-            Modify the details as needed and click "Save" to update the product in the database.
+            Modify the details as needed and click <strong style="color:dodgerblue">"Save"</strong> to update the product in the database.
             </li>
             <li class="p-2">
-            To delete a product, click the "Delete" button next to the product you want to remove. 
+            To delete a product, click the <strong style="color:gray">"Delete"</strong> button next to the product you want to remove. 
             A confirmation dialog will appear. 
-            Click "Confirm" to permanently delete the product from the database.
+            Click the <strong style="color:red">"Delete"</strong> button to permanently delete the product from the database.
             </li>
         </ul>
     </details>
