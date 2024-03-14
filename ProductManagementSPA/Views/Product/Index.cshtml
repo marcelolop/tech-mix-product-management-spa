@@ -12,8 +12,41 @@
     /// Load data from the database when the page is ready
     /// </summary>
     $(document).ready(function () {
+        // Load data from the database when the page is ready
         loadData();
-    })
+
+        // Event handler for delete confirmation button click
+        $('#btnConfirmDelete').click(function () {
+            let productId = $(this).data('productId');
+
+            // Ajax call to delete the product by its ID from the database
+            $.ajax({
+                url: "/Product/DeleteProduct/" + productId,
+                type: "POST",
+                contentType: "application/json;charset=UTF-8",
+                dataType: "json",
+                success: function (result) {
+                    // If the product is deleted successfully, reload the data with the updated list of products
+                    if (result == true) {
+                        loadData();
+                    }
+                    else {
+                        if (result == "Product not found") {
+                            alert("Product not found");
+                        } else {
+                            alert("Product not deleted");
+                        }
+                    }
+                },
+                error: function (errormessage) {
+                    alert(errormessage.responseText);
+                }
+            });
+
+            // Close the delete confirmation modal
+            $('#deleteModal').modal('hide');
+        });
+    });
 
     /// <summary>
     /// Load data from the database
@@ -38,7 +71,7 @@
                     html += '<td class="text-center align-middle">' + item.Category + '</td>';
                     html += '<td class="text-center align-middle">' + item.Supplier + '</td>';
                     html += '<td class="text-center align-middle"><button class="btn btn-primary" onclick="return getProductByID(' + item.ProductID + ')">Edit</button></td>';
-                    html += '<td class="text-center align-middle"><button class="btn btn-secondary" onclick="Delele(' + item.ProductID + ')">Delete</button></td>';
+                    html += '<td class="text-center align-middle"><button class="btn btn-secondary" onclick="openDeleteModal(' + item.ProductID + ')">Delete</button></td>';
                     html += '</tr>';
                 });
                 $('.tbody').html(html);
@@ -53,14 +86,34 @@
         });
     }
 
-    // Function to truncate text if it exceeds a certain number of characters
-    function truncateText(text, maxLength) {
-        if (text.length > maxLength) {
-            return text.substring(0, maxLength) + '...';
-        }
-        return text;
-    }
+    ///<summary>
+    ///Open the delete confirmation modal
+    ///</summary>
+    ///<param name="productId">The ID of the product to delete</param>
+    function openDeleteModal(productId) {
+        // Store the product ID in a data attribute of the confirm button
+        $('#btnConfirmDelete').data('productId', productId);
+        //Showing basic product details in the modal
+        $.ajax({
+            url: "/Product/GetProductByID/" + productId,
+            type: "GET",
+            contentType: "application/json;charset=utf-8",
+            dataType: "json",
+            success: function (result) {
+                $('#deleteModal').find('.modal-body').text('Are you sure you want to delete the product "' + result.Name + '"?');
+            },
+            error: function (errormessage) {
+                if(errormessage.responseText == "Not Found") {
+                    alert("Product not found");
+                } else {
+                    alert(errormessage.responseText);
+                }
+            }
+        });
 
+        // Open the delete confirmation modal
+        $('#deleteModal').modal('show');
+    }
 
     /// <summary>
     /// Add a new product to the database
@@ -69,26 +122,7 @@
     /// <remarks>Validation using jQuery</remarks>
     function addProduct() {
         //Validation using jQuery
-        let isValid = true;
-        //product name validation
-        isValid &= validateField('#name', '#errorMessageName', value => value != "", 'Name is required');
-        isValid &= validateField('#name', '#errorMessageName', value => !/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g.test(value), 'Name cannot contain special characters');
-        isValid &= validateField('#name', '#errorMessageName', value => value.length <= 50, 'Name must be less than 50 characters');
-        //product description validation
-        isValid &= validateField('#description', '#errorMessageDescription', value => value != "", 'Description is required');
-        isValid &= validateField('#description', "#errorMessageDescription", value => value.length <= 100, "Description must be less than 100 characters");
-        //product price validation
-        isValid &= validateField('#price', '#errorMessagePrice', value => value != "" && !isNaN(value) && value > 0, 'Price must be a positive number');
-        //product quantity validation
-        isValid &= validateField('#quantity', '#errorMessageQuantity', value => value != "" && Number.isInteger(parseFloat(value)) && value >= 0, 'Quantity must be a non-negative integer');
-        //product category validation
-        isValid &= validateField('#category', '#errorMessageCategory', value => value.length <= 50, 'Category must be less than 50 characters');
-        isValid &= validateField('#category', '#errorMessageCategory', value => isNaN(value), 'Category must be a string');
-        isValid &= validateField('#category', '#errorMessageCategory', value => value != "", 'Category is required');
-        //product supplier validation
-        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value.length <= 50, 'Supplier must be less than 50 characters');
-        isValid &= validateField('#supplier', '#errorMessageSupplier', value => isNaN(value), 'Supplier must be a string');
-        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value != "", 'Supplier is required');
+        let isValid = validateProduct();
 
         if (!isValid) {
             return false;
@@ -146,6 +180,7 @@
     /// <returns>The product details</returns>
     function getProductByID(productId) {
 
+        clearSpans();
         // Ajax call to get the product by its ID
         $.ajax({
             url: "/Product/GetProductByID/" + productId,
@@ -187,26 +222,7 @@
     /// <remarks>Validation using jQuery</remarks>
     function updateProduct() {
         //Validation using jQuery
-        let isValid = true;
-        //product name validation
-        isValid &= validateField('#name', '#errorMessageName', value => value != "", 'Name is required');
-        isValid &= validateField('#name', '#errorMessageName', value => !/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g.test(value), 'Name cannot contain special characters');
-        isValid &= validateField('#name', '#errorMessageName', value => value.length <= 50, 'Name must be less than 50 characters');
-        //product description validation
-        isValid &= validateField('#description', '#errorMessageDescription', value => value != "", 'Description is required');
-        isValid &= validateField('#description', "#errorMessageDescription", value => value.length <= 100, "Description must be less than 100 characters");
-        //product price validation
-        isValid &= validateField('#price', '#errorMessagePrice', value => value != "" && !isNaN(value) && value > 0, 'Price must be a positive number');
-        //product quantity validation
-        isValid &= validateField('#quantity', '#errorMessageQuantity', value => value != "" && Number.isInteger(parseFloat(value)) && value >= 0, 'Quantity must be a non-negative integer');
-        //product category validation
-        isValid &= validateField('#category', '#errorMessageCategory', value => value.length <= 50, 'Category must be less than 50 characters');
-        isValid &= validateField('#category', '#errorMessageCategory', value => isNaN(value), 'Category must be a string');
-        isValid &= validateField('#category', '#errorMessageCategory', value => value != "", 'Category is required');
-        //product supplier validation
-        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value.length <= 50, 'Supplier must be less than 50 characters');
-        isValid &= validateField('#supplier', '#errorMessageSupplier', value => isNaN(value), 'Supplier must be a string');
-        isValid &= validateField('#supplier', '#errorMessageSupplier', value => value != "", 'Supplier is required');
+        let isValid = validateProduct();
 
         if (!isValid) {
             return false;
@@ -258,36 +274,39 @@
     /// </summary>
     /// <param name="productId">The ID of the product to delete</param>
     /// <returns>True if the product is deleted successfully, false otherwise</returns>
-    function Delele(productId) {
-        // Ask the user to confirm the deletion, then delete the product(confirm is a built-in JavaScript function that displays a dialog box with a specified message and an OK and a Cancel button.
-        //If the user clicks the OK button, the confirm method returns true.Otherwise, it returns false.)
-        let ans = confirm("Are you sure you want to delete this Record?");
-        if (ans) {
-            //Ajax call to delete the product by its ID from the database if the user confirms the deletion
-            $.ajax({
-                url: "/Product/DeleteProduct/" + productId,
-                type: "POST",
-                contentType: "application/json;charset=UTF-8",
-                dataType: "json",
-                success: function (result) {
-                    // If the product is deleted successfully, reload the data with the updated list of products
-                    if (result == true) {
-                        loadData();
-                    }
-                    else {
-                        if (result == "Product not found") {
-                            alert("Product not found");
-                        } else {
-                            alert("Product not deleted");
-                        }
-                    }
-                },
-                error: function (errormessage) {
-                    alert(errormessage.responseText);
-                }
-            });
-        }
+    function Delete(productId) {
+        $('#btnConfirmDelete').data('productId', productId);
+
+        $('#deleteModal').modal('show');
     }
+
+    $('#btnConfirmDelete').click(function () {
+        let productId = $(this).data('productId');
+
+        $.ajax({
+            url: "/Product/DeleteProduct/" + productId,
+            type: "POST",
+            contentType: "application/json;charset=UTF-8",
+            dataType: "json",
+            success: function (result) {
+                if (result == true) {
+                    loadData();
+                }
+                else {
+                    if (result == "Product not found") {
+                        alert("Product not found");
+                    } else {
+                        alert("Product not deleted");
+                    }
+                }
+            },
+            error: function (errormessage) {
+                alert(errormessage.responseText);
+            }
+        });
+
+        $('#deleteModal').modal('hide');
+    });
 
     /// <summary>
     /// Clear the textboxes
@@ -306,6 +325,26 @@
         $('#errorMessage').text('');
     }
 
+    ///<summary>
+    ///Clear the error messages
+    ///</summary>
+    ///<returns>Clear the error messages text</returns>
+    function clearSpans() {
+        $('#errorMessageName').text('');
+        $('#errorMessageDescription').text('');
+        $('#errorMessagePrice').text('');
+        $('#errorMessageQuantity').text('');
+        $('#errorMessageCategory').text('');
+        $('#errorMessageSupplier').text('');
+    }
+
+    // Function to truncate text if it exceeds a certain number of characters
+    function truncateText(text, maxLength) {
+        if (text.length > maxLength) {
+            return text.substring(0, maxLength) + '...';
+        }
+        return text;
+    }
 
     ///<summary>
     ///Validate the field and display specific error message
@@ -326,9 +365,50 @@
         }
     }
 
+
+    ///<summary>
+    ///Validate the product form
+    ///</summary>
+    ///<returns>True if the product form is valid, false otherwise</returns>
+    function validateProduct() {
+        //product name validation
+        let isValidName = validateField('#name', '#errorMessageName', value => value.trim() != "", 'Name is required');
+        isValidName = isValidName && validateField('#name', '#errorMessageName', value => !/[~`!#$%\^&*+=\[\]\\';,/{}|\\":<>\?]/g.test(value), 'Name cannot contain special characters');
+        isValidName = isValidName && validateField('#name', '#errorMessageName', value => value.length <= 50, 'Name must be less than 50 characters');
+
+        //product description validation
+        let isValidDescription = validateField('#description', '#errorMessageDescription', value => value.trim() != "", 'Description is required');
+        isValidDescription = isValidDescription && validateField('#description', "#errorMessageDescription", value => value.length <= 100, "Description must be less than 100 characters");
+
+        //product price validation
+        let isValidPrice = validateField('#price', '#errorMessagePrice', value => value.trim() != "", 'Price is required');
+        isValidPrice = isValidPrice && validateField('#price', '#errorMessagePrice', value => !isNaN(value) && value > 0, 'Price must be a positive number');
+
+        //product quantity validation
+        let isValidQuantity = validateField('#quantity', '#errorMessageQuantity', value => value.trim() != "", 'Quantity is required');
+        isValidQuantity = isValidQuantity && validateField('#quantity', '#errorMessageQuantity', value => Number.isInteger(parseFloat(value)) && value >= 0, 'Quantity must be a non-negative integer');
+
+        //product category validation
+        let isValidCategory = validateField('#category', '#errorMessageCategory', value => value != "", 'Category is required');
+        isValidCategory = isValidCategory && validateField('#category', '#errorMessageCategory', value => value.length <= 50, 'Category must be less than 50 characters');
+
+        //product supplier validation
+        let isValidSupplier = validateField('#supplier', '#errorMessageSupplier', value => value.trim() != "", 'Supplier is required');
+        isValidSupplier = isValidSupplier && validateField('#supplier', '#errorMessageSupplier', value => isNaN(value), 'Supplier must be a string');
+        isValidSupplier = isValidSupplier && validateField('#supplier', '#errorMessageSupplier', value => value.length <= 50, 'Supplier must be less than 50 characters');
+
+        // Combine all validation results
+        let isValid = isValidName && isValidDescription && isValidPrice && isValidQuantity && isValidCategory && isValidSupplier;
+
+        return isValid;
+    }
+
+
+
     //Categories dropdown list
     $(document).ready(function () {
         let categories = [
+            "",
             "Smartphones",
             "Laptops",
             "Desktops",
@@ -421,6 +501,7 @@
         </tbody>
     </table>
 
+    <!-- Dynamic Add/Edit Product Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -490,6 +571,25 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" id="btnAdd" onclick="addProduct()">Add</button>
                     <button type="button" class="btn btn-primary" id="btnUpdate" onclick="updateProduct()">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h4 class="modal-title" id="deleteModalLabel">Confirm Deletion</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this Record?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="btnConfirmDelete">Delete</button>
+                    @*<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>*@
                 </div>
             </div>
         </div>
